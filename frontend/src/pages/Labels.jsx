@@ -5,6 +5,7 @@ import { printOnLocalAgent } from "../printAgent.js";
 export default function Labels() {
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState(new Set());
+  const [printerType, setPrinterType] = useState("zpl");
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
   const [printing, setPrinting] = useState(false);
@@ -31,7 +32,7 @@ export default function Labels() {
       const withStatus = [];
       for (const label of labels) {
         try {
-          const outcome = await printOnLocalAgent(label.zpl);
+          const outcome = await printOnLocalAgent({ printerType, zpl: label.zpl, label });
           withStatus.push({ ...label, ...outcome, status: outcome.dryRun ? "dryRun" : "printed" });
         } catch (err) {
           withStatus.push({ ...label, status: "error", errorMessage: err.message });
@@ -73,9 +74,15 @@ export default function Labels() {
         </tbody>
       </table>
 
-      <button style={{ marginTop: 16 }} onClick={handlePrint} disabled={selected.size === 0 || printing}>
-        {printing ? "Yazdırılıyor..." : `Seçilenleri Yazdır (${selected.size})`}
-      </button>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 16 }}>
+        <select value={printerType} onChange={(e) => setPrinterType(e.target.value)}>
+          <option value="zpl">Zebra (termal) yazıcı</option>
+          <option value="generic">Diğer yazıcı (A4/etiket kağıdı)</option>
+        </select>
+        <button onClick={handlePrint} disabled={selected.size === 0 || printing}>
+          {printing ? "Yazdırılıyor..." : `Seçilenleri Yazdır (${selected.size})`}
+        </button>
+      </div>
 
       {results.length > 0 && (
         <div style={{ marginTop: 20 }}>
@@ -88,7 +95,10 @@ export default function Labels() {
               {label.status === "error" && (
                 <em style={{ color: "crimson" }}>{label.errorMessage}</em>
               )}
-              <pre>{label.zpl}</pre>
+              {printerType === "zpl" && <pre>{label.zpl}</pre>}
+              {printerType === "generic" && label.savedTo && (
+                <p style={{ fontSize: "0.85rem", color: "#666" }}>Kaydedildi: {label.savedTo}</p>
+              )}
             </div>
           ))}
         </div>

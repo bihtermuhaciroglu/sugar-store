@@ -61,7 +61,8 @@ VITE_PRINT_AGENT_TOKEN=dev-token     # print-agent/.env içindeki ile aynı olma
 
 ```
 PORT=4200
-PRINTER_NAME=<Windows'ta yüklü Zebra yazıcının tam adı>
+ZPL_PRINTER_NAME=<Windows'ta yüklü Zebra yazıcının tam adı>
+GENERIC_PRINTER_NAME=<Windows'ta yüklü diğer yazıcının tam adı>
 PRINT_AGENT_TOKEN=dev-token
 ```
 
@@ -135,12 +136,24 @@ sepete ekleme yapılabilir.
 
 ## Etiket yazdırma
 
-`backend/src/routes/labels.js` sadece ZPL metnini üretir
-(`POST /api/labels/build`). Yazdırma işini `print-agent` yapar: frontend
-üretilen ZPL'i `http://localhost:4200/print` adresine gönderir. Ajan
+`backend/src/routes/labels.js` sadece ZPL metnini ve ürün bilgisini üretir
+(`POST /api/labels/build`). Yazdırma işini `print-agent` yapar. Etiketler
+sayfasında iki yazıcı türü seçilebilir:
+
+- **Zebra (termal)**: `PRINTER_NAME`/`ZPL_PRINTER_NAME` ortam değişkenine
+  tanımlı yazıcıya doğrudan ZPL komutu gönderilir.
+- **Diğer yazıcı (A4/etiket kağıdı)**: herhangi bir Windows yazıcısı —
+  etiket, barkodu içeren küçük bir PDF olarak oluşturulup (`bwip-js` +
+  `pdfkit`, DejaVu Sans fontuyla — Türkçe karakterler doğru basılsın diye)
+  `GENERIC_PRINTER_NAME`'e tanımlı yazıcıya normal Windows yazdırma
+  yoluyla (`pdf-to-printer`) gönderilir.
+
+İkisi de aynı anda kullanılabilir; hangi ürünü hangi yazıcıya
+göndereceğinizi Etiketler sayfasındaki açılır menüden seçersiniz. Ajan
 mağazadaki bilgisayarda çalışmıyorsa (ör. online ofisten deneniyorsa)
-arayüzde "Etiket yazıcısı bu bilgisayarda bulunamadı" hatası gösterilir,
-ZPL önizlemesi yine de görünür.
+arayüzde "Etiket yazıcısı bu bilgisayarda bulunamadı" hatası gösterilir.
+Etiket boyutu ~50mm x 30mm — kıyafet üzerindeki küçük fiyat kartlarına
+uygun.
 
 ## Ürün fotoğrafları
 

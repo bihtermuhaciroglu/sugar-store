@@ -4,21 +4,20 @@ import { asyncHandler } from "../asyncHandler.js";
 
 const router = Router();
 
+// Kıyafet etiketi boyutu: ~50mm x 30mm (203dpi / 8 dot-mm Zebra yazıcılarda 400x240 dot)
 export function buildLabelZpl({ name, size, color, price, barcode }) {
-  const title = [name, size, color].filter(Boolean).join(" - ").slice(0, 32);
+  const title = [name, size, color].filter(Boolean).join(" - ").slice(0, 28);
   const priceText = `${Number(price).toFixed(2)} TL`;
 
   return [
     "^XA",
     "^PW400",
-    "^LL320",
-    // SugarStore marka başlığı (Zebra yazıcılar tek renk bastığı için logo
-    // yerine sade, kalın bir yazı kullanılıyor; ortalanmış)
-    "^FO10,8^FB380,1,0,C,0^A0N,22,22^FDSugarStore^FS",
-    "^FO20,40^A0N,24,24^FD" + title + "^FS",
-    "^FO20,72^A0N,36,36^FD" + priceText + "^FS",
-    "^FO20,130^BY2",
-    "^BCN,80,Y,N,N",
+    "^LL240",
+    "^FO10,6^FB380,1,0,C,0^A0N,18,18^FDSugarStore^FS",
+    "^FO20,28^A0N,18,18^FD" + title + "^FS",
+    "^FO20,50^A0N,30,30^FD" + priceText + "^FS",
+    "^FO20,90^BY2",
+    "^BCN,60,Y,N,N",
     "^FD" + barcode + "^FS",
     "^XZ",
   ].join("\n");
@@ -37,7 +36,15 @@ router.post(
       const result = await db.execute({ sql: "SELECT * FROM products WHERE id = ?", args: [id] });
       const product = result.rows[0];
       if (!product) continue;
-      labels.push({ product_id: id, barcode: product.barcode, zpl: buildLabelZpl(product) });
+      labels.push({
+        product_id: id,
+        name: product.name,
+        size: product.size,
+        color: product.color,
+        price: product.price,
+        barcode: product.barcode,
+        zpl: buildLabelZpl(product),
+      });
     }
 
     res.json({ labels });
