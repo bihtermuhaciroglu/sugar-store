@@ -2,26 +2,19 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { OWNER_WHATSAPP, OWNER_NAME, STORE_NAME } from "../config.js";
 
-function isToday(isoDate) {
-  const date = new Date(isoDate + "Z");
-  return date.toDateString() === new Date().toDateString();
-}
-
 export default function DailyRevenueBanner() {
-  const [todaySales, setTodaySales] = useState(null);
+  const [summary, setSummary] = useState(null);
 
   useEffect(() => {
     function refresh() {
-      api.listSales().then((sales) => {
-        setTodaySales(sales.filter((s) => isToday(s.created_at)));
-      });
+      api.getTodaySummary().then(setSummary);
     }
     refresh();
     const interval = setInterval(refresh, 60_000);
     return () => clearInterval(interval);
   }, []);
 
-  if (todaySales === null) return null;
+  if (summary === null) return null;
   if (!OWNER_WHATSAPP) {
     return (
       <div className="banner banner-info">
@@ -32,8 +25,7 @@ export default function DailyRevenueBanner() {
   }
 
   // Ciro bilgisi ekranda gösterilmez, sadece Zuhal Hanım'a giden mesajın içine konur.
-  const total = todaySales.reduce((sum, s) => sum + s.total, 0);
-  const text = `Merhaba ${OWNER_NAME} Hanım, bugünkü ciro: ${total.toFixed(2)} TL (${todaySales.length} satış). Kolay gelsin — ${STORE_NAME} 💛`;
+  const text = `Merhaba ${OWNER_NAME} Hanım, bugünkü ciro: ${summary.total.toFixed(2)} TL (${summary.count} satış). Kolay gelsin — ${STORE_NAME} 💛`;
   const waLink = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(text)}`;
 
   return (

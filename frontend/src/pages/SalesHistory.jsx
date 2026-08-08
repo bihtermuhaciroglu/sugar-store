@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import HistoryPasswordGate from "../components/HistoryPasswordGate.jsx";
 
-export default function SalesHistory() {
+function SalesHistoryContent() {
   const [sales, setSales] = useState([]);
 
   useEffect(() => {
-    api.listSales().then(setSales);
+    api.listSalesHistory().then(setSales);
   }, []);
 
   return (
@@ -39,5 +40,13 @@ export default function SalesHistory() {
         </tbody>
       </table>
     </div>
+  );
+}
+
+export default function SalesHistory() {
+  return (
+    <HistoryPasswordGate>
+      <SalesHistoryContent />
+    </HistoryPasswordGate>
   );
 }

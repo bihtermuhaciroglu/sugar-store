@@ -8,7 +8,7 @@ export default function Sale() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [checkingOut, setCheckingOut] = useState(false);
   const [lastReceipt, setLastReceipt] = useState(null);
   const inputRef = useRef(null);
 
@@ -76,8 +76,9 @@ export default function Sale() {
 
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  async function handleCheckout() {
+  async function handleCheckout(paymentMethod) {
     setError("");
+    setCheckingOut(true);
     try {
       const sale = await api.createSale(
         cart.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
@@ -87,6 +88,8 @@ export default function Sale() {
       setCart([]);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setCheckingOut(false);
     }
   }
 
@@ -176,13 +179,20 @@ export default function Sale() {
 
         <div className="total">Toplam: {total.toFixed(2)} TL</div>
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-            <option value="cash">Nakit</option>
-            <option value="card">Kart</option>
-          </select>
-          <button onClick={handleCheckout} disabled={cart.length === 0}>
-            Satışı Tamamla
+        <div className="payment-buttons">
+          <button
+            className="payment-button payment-cash"
+            onClick={() => handleCheckout("cash")}
+            disabled={cart.length === 0 || checkingOut}
+          >
+            💵 Nakit
+          </button>
+          <button
+            className="payment-button payment-card"
+            onClick={() => handleCheckout("card")}
+            disabled={cart.length === 0 || checkingOut}
+          >
+            💳 Kredi Kartı
           </button>
         </div>
       </div>

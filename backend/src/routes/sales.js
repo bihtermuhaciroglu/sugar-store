@@ -4,9 +4,26 @@ import { asyncHandler } from "../asyncHandler.js";
 
 const router = Router();
 
+const HISTORY_PASSWORD = process.env.HISTORY_PASSWORD;
+
+router.get(
+  "/summary/today",
+  asyncHandler(async (_req, res) => {
+    // Türkiye sabit UTC+3 (DST yok), created_at UTC olarak saklanıyor
+    const result = await db.execute(
+      "SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE date(created_at, '+3 hours') = date('now', '+3 hours')"
+    );
+    res.json(result.rows[0]);
+  })
+);
+
 router.get(
   "/",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    if (HISTORY_PASSWORD && req.headers["x-history-password"] !== HISTORY_PASSWORD) {
+      return res.status(401).json({ error: "Satış geçmişi şifresi gerekli veya hatalı" });
+    }
+
     const salesResult = await db.execute("SELECT * FROM sales ORDER BY created_at DESC");
     const sales = salesResult.rows;
 
