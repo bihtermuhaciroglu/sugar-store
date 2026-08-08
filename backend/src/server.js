@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import productsRouter from "./routes/products.js";
 import salesRouter from "./routes/sales.js";
 import labelsRouter from "./routes/labels.js";
+import reportsRouter from "./routes/reports.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api", (req, res, next) => {
 app.use("/api/products", productsRouter);
 app.use("/api/sales", salesRouter);
 app.use("/api/labels", labelsRouter);
+app.use("/api/reports", reportsRouter);
 
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "Bulunamadı" });

@@ -4,9 +4,11 @@ import HistoryPasswordGate from "../components/HistoryPasswordGate.jsx";
 
 function SalesHistoryContent() {
   const [sales, setSales] = useState([]);
+  const [returns, setReturns] = useState([]);
 
   useEffect(() => {
     api.listSalesHistory().then(setSales);
+    api.listReturns().then(setReturns);
   }, []);
 
   return (
@@ -39,6 +41,34 @@ function SalesHistoryContent() {
           )}
         </tbody>
       </table>
+
+      {returns.length > 0 && (
+        <>
+          <h1 style={{ marginTop: 32 }}>İadeler</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Satış #</th>
+                <th>Tarih</th>
+                <th>Ürün Sayısı</th>
+                <th>Tutar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {returns.map((ret) => (
+                <tr key={ret.id}>
+                  <td>{ret.id}</td>
+                  <td>{ret.sale_id}</td>
+                  <td>{new Date(ret.created_at + "Z").toLocaleString("tr-TR")}</td>
+                  <td>{ret.items.reduce((sum, i) => sum + i.quantity, 0)}</td>
+                  <td>-{ret.total.toFixed(2)} TL</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 }

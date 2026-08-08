@@ -73,6 +73,11 @@ export const api = {
     request("/sales", { method: "POST", body: JSON.stringify({ items, payment_method }) }),
   getTodaySummary: () => request("/sales/summary/today"),
   listSalesHistory: () => request("/sales", {}, { historyAuth: true }),
+  listReturns: () => request("/sales/returns", {}, { historyAuth: true }),
+  getSaleById: (id) => request(`/sales/${id}`),
+  createReturn: (saleId, items) =>
+    request(`/sales/${saleId}/return`, { method: "POST", body: JSON.stringify({ items }) }),
+  getWeeklySummary: () => request("/reports/weekly-summary"),
   buildLabels: (product_ids) =>
     request("/labels/build", { method: "POST", body: JSON.stringify({ product_ids }) }),
 };
