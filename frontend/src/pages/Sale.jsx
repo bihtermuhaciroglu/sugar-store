@@ -9,10 +9,11 @@ export default function Sale() {
   const [searchResults, setSearchResults] = useState([]);
   const [error, setError] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
-  const [lastReceipt, setLastReceipt] = useState(null);
+  const [saleCompleted, setSaleCompleted] = useState(false);
   const inputRef = useRef(null);
 
   const addProductToCart = useCallback((product) => {
+    setSaleCompleted(false);
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
@@ -80,11 +81,11 @@ export default function Sale() {
     setError("");
     setCheckingOut(true);
     try {
-      const sale = await api.createSale(
+      await api.createSale(
         cart.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
         paymentMethod
       );
-      setLastReceipt(sale);
+      setSaleCompleted(true);
       setCart([]);
     } catch (err) {
       setError(err.message);
@@ -201,11 +202,8 @@ export default function Sale() {
         </div>
       </div>
 
-      {lastReceipt && (
-        <div style={{ marginTop: 20 }}>
-          <h2>Son Satış #{lastReceipt.id}</h2>
-          <p>Toplam: {lastReceipt.total.toFixed(2)} TL — {lastReceipt.payment_method === "cash" ? "Nakit" : "Kart"}</p>
-        </div>
+      {saleCompleted && (
+        <p style={{ marginTop: 20, color: "#1f9d55", fontWeight: 600 }}>Satış tamamlandı ✅</p>
       )}
     </div>
   );
