@@ -219,8 +219,17 @@ router.post(
         if (product.quantity < item.quantity) {
           throw new Error(`Yetersiz stok: ${product.name}`);
         }
-        total += product.price * item.quantity;
-        resolvedItems.push({ product, quantity: item.quantity });
+
+        // Kasada elle fiyat değiştirme (indirim) desteklenir — geçerli bir
+        // sayı verilmişse ürünün kayıtlı fiyatı yerine o kullanılır.
+        const hasCustomPrice = item.unit_price !== undefined && item.unit_price !== null;
+        const unitPrice = hasCustomPrice ? Number(item.unit_price) : product.price;
+        if (hasCustomPrice && (!Number.isFinite(unitPrice) || unitPrice < 0)) {
+          throw new Error(`Geçersiz fiyat: ${product.name}`);
+        }
+
+        total += unitPrice * item.quantity;
+        resolvedItems.push({ product, quantity: item.quantity, unitPrice });
       }
 
       const saleResult = await tx.execute({
@@ -229,10 +238,10 @@ router.post(
       });
       const saleId = Number(saleResult.lastInsertRowid);
 
-      for (const { product, quantity } of resolvedItems) {
+      for (const { product, quantity, unitPrice } of resolvedItems) {
         await tx.execute({
           sql: "INSERT INTO sale_items (sale_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)",
-          args: [saleId, product.id, quantity, product.price],
+          args: [saleId, product.id, quantity, unitPrice],
         });
 
         await tx.execute({

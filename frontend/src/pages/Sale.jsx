@@ -21,9 +21,16 @@ export default function Sale() {
           item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, unitPrice: product.price }];
     });
   }, []);
+
+  function updateUnitPrice(productId, value) {
+    const price = Math.max(0, Number(value) || 0);
+    setCart((prev) =>
+      prev.map((item) => (item.product.id === productId ? { ...item, unitPrice: price } : item))
+    );
+  }
 
   const addByBarcode = useCallback(
     async (barcode) => {
@@ -75,14 +82,18 @@ export default function Sale() {
     );
   }
 
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const total = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
   async function handleCheckout(paymentMethod) {
     setError("");
     setCheckingOut(true);
     try {
       await api.createSale(
-        cart.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
+        cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+        })),
         paymentMethod
       );
       setSaleCompleted(true);
@@ -166,8 +177,22 @@ export default function Sale() {
                   {" "}{item.quantity}{" "}
                   <button className="secondary" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>+</button>
                 </td>
-                <td>{item.product.price.toFixed(2)} TL</td>
-                <td>{(item.product.price * item.quantity).toFixed(2)} TL</td>
+                <td>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    style={{ width: 90 }}
+                    value={item.unitPrice}
+                    onChange={(e) => updateUnitPrice(item.product.id, e.target.value)}
+                  />
+                  {item.unitPrice !== item.product.price && (
+                    <span style={{ fontSize: "0.75rem", color: "#888", display: "block" }}>
+                      normal: {item.product.price.toFixed(2)} TL
+                    </span>
+                  )}
+                </td>
+                <td>{(item.unitPrice * item.quantity).toFixed(2)} TL</td>
                 <td>
                   <button className="secondary" onClick={() => updateQuantity(item.product.id, 0)}>Çıkar</button>
                 </td>
