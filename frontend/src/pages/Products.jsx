@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { resizeImageFile } from "../imageResize.js";
+import { printOnLocalAgent } from "../printAgent.js";
 
 const emptyForm = { name: "", category: "", barcode: "", size: "", color: "", price: "", quantity: "", image: "" };
 
@@ -9,6 +10,11 @@ export default function Products() {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [adjustAmounts, setAdjustAmounts] = useState({});
+  const [selected, setSelected] = useState(new Set());
+  const [printerType, setPrinterType] = useState("zpl");
+  const [printResults, setPrintResults] = useState([]);
+  const [printing, setPrinting] = useState(false);
 
   async function load(searchTerm = "") {
     const data = await api.listProducts(searchTerm ? { search: searchTerm } : {});
@@ -68,10 +74,51 @@ export default function Products() {
     }
   }
 
+  async function handleBulkAdjust(id, sign) {
+    const amount = Number(adjustAmounts[id]);
+    if (!amount || amount <= 0) {
+      setError("Önce geçerli bir adet girin");
+      return;
+    }
+    await handleAdjust(id, sign * amount);
+    setAdjustAmounts((prev) => ({ ...prev, [id]: "" }));
+  }
+
   async function handleDelete(id) {
     if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return;
     await api.deleteProduct(id);
     load(search);
+  }
+
+  function toggleSelected(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function handlePrint() {
+    setError("");
+    setPrintResults([]);
+    setPrinting(true);
+    try {
+      const { labels } = await api.buildLabels([...selected]);
+      const withStatus = [];
+      for (const label of labels) {
+        try {
+          const outcome = await printOnLocalAgent({ printerType, zpl: label.zpl, label });
+          withStatus.push({ ...label, ...outcome, status: outcome.dryRun ? "dryRun" : "printed" });
+        } catch (err) {
+          withStatus.push({ ...label, status: "error", errorMessage: err.message });
+        }
+      }
+      setPrintResults(withStatus);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPrinting(false);
+    }
   }
 
   return (
@@ -140,6 +187,7 @@ export default function Products() {
       <table>
         <thead>
           <tr>
+            <th></th>
             <th>Foto</th>
             <th>Ad</th>
             <th>Kategori</th>
@@ -148,12 +196,16 @@ export default function Products() {
             <th>Barkod</th>
             <th>Fiyat</th>
             <th>Stok</th>
+            <th>Stok Düzelt</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {products.map((p) => (
             <tr key={p.id}>
+              <td>
+                <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelected(p.id)} />
+              </td>
               <td>
                 <label className="product-thumb-label">
                   {p.image ? (
@@ -176,6 +228,18 @@ export default function Products() {
               <td>{p.barcode}</td>
               <td>{p.price.toFixed(2)} TL</td>
               <td>{p.quantity}</td>
+              <td style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="adet"
+                  style={{ width: 60 }}
+                  value={adjustAmounts[p.id] || ""}
+                  onChange={(e) => setAdjustAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                />
+                <button className="secondary" onClick={() => handleBulkAdjust(p.id, -1)}>Düş</button>
+                <button className="secondary" onClick={() => handleBulkAdjust(p.id, 1)}>Ekle</button>
+              </td>
               <td style={{ display: "flex", gap: 6 }}>
                 <button className="secondary" onClick={() => handleAdjust(p.id, 1)}>+1</button>
                 <button className="secondary" onClick={() => handleAdjust(p.id, -1)}>-1</button>
@@ -185,11 +249,39 @@ export default function Products() {
           ))}
           {products.length === 0 && (
             <tr>
-              <td colSpan={9}>Henüz ürün yok.</td>
+              <td colSpan={11}>Henüz ürün yok.</td>
             </tr>
           )}
         </tbody>
       </table>
+
+      <h1 style={{ marginTop: 32 }}>Fiyat Etiketi Basımı</h1>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16 }}>
+        <select value={printerType} onChange={(e) => setPrinterType(e.target.value)}>
+          <option value="zpl">Zebra (termal) yazıcı</option>
+          <option value="generic">Diğer yazıcı (A4/etiket kağıdı)</option>
+        </select>
+        <button onClick={handlePrint} disabled={selected.size === 0 || printing}>
+          {printing ? "Yazdırılıyor..." : `Seçilenleri Yazdır (${selected.size})`}
+        </button>
+      </div>
+
+      {printResults.length > 0 && (
+        <div>
+          {printResults.map((label) => (
+            <div key={label.product_id} style={{ marginBottom: 12 }}>
+              <strong>{label.barcode}</strong>{" "}
+              {label.status === "printed" && <em>yazıcıya gönderildi ✅</em>}
+              {label.status === "dryRun" && <em>(yazıcı bağlı değil, sadece önizleme)</em>}
+              {label.status === "error" && <em style={{ color: "crimson" }}>{label.errorMessage}</em>}
+              {printerType === "zpl" && <pre>{label.zpl}</pre>}
+              {printerType === "generic" && label.savedTo && (
+                <p style={{ fontSize: "0.85rem", color: "#666" }}>Kaydedildi: {label.savedTo}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
