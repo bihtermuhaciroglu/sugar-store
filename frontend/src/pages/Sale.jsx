@@ -134,6 +134,7 @@ export default function Sale() {
       </div>
 
       <div className="cart">
+        <div className="table-scroll">
         <table>
           <thead>
             <tr>
@@ -147,15 +148,17 @@ export default function Sale() {
           <tbody>
             {cart.map((item) => (
               <tr key={item.product.id}>
-                <td className="cart-product-cell">
-                  {item.product.image ? (
-                    <img className="product-thumb" src={item.product.image} alt={item.product.name} />
-                  ) : (
-                    <span className="product-thumb product-thumb-empty">Foto yok</span>
-                  )}
-                  <span>
-                    {item.product.name} {item.product.size} {item.product.color}
-                  </span>
+                <td>
+                  <div className="cart-product-cell">
+                    {item.product.image ? (
+                      <img className="product-thumb" src={item.product.image} alt={item.product.name} />
+                    ) : (
+                      <span className="product-thumb product-thumb-empty">Foto yok</span>
+                    )}
+                    <span>
+                      {item.product.name} {item.product.size} {item.product.color}
+                    </span>
+                  </div>
                 </td>
                 <td>
                   <button className="secondary" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}>-</button>
@@ -176,6 +179,7 @@ export default function Sale() {
             )}
           </tbody>
         </table>
+        </div>
 
         <div className="total">Toplam: {total.toFixed(2)} TL</div>
 

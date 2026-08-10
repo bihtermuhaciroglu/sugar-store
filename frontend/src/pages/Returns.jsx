@@ -75,6 +75,7 @@ export default function Returns() {
             Satış #{sale.id} — {new Date(sale.created_at + "Z").toLocaleString("tr-TR")} —{" "}
             {sale.payment_method === "cash" ? "Nakit" : "Kredi Kartı"}
           </p>
+          <div className="table-scroll">
           <table>
             <thead>
               <tr>
@@ -109,6 +110,7 @@ export default function Returns() {
               })}
             </tbody>
           </table>
+          </div>
           <button style={{ marginTop: 16 }} onClick={handleSubmitReturn} disabled={loading}>
             {loading ? "İşleniyor..." : "İadeyi Onayla"}
           </button>

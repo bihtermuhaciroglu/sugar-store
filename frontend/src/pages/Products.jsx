@@ -184,6 +184,7 @@ export default function Products() {
         style={{ marginBottom: 12, width: "100%" }}
       />
 
+      <div className="table-scroll">
       <table>
         <thead>
           <tr>
@@ -228,22 +229,26 @@ export default function Products() {
               <td>{p.barcode}</td>
               <td>{p.price.toFixed(2)} TL</td>
               <td>{p.quantity}</td>
-              <td style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="adet"
-                  style={{ width: 60 }}
-                  value={adjustAmounts[p.id] || ""}
-                  onChange={(e) => setAdjustAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                />
-                <button className="secondary" onClick={() => handleBulkAdjust(p.id, -1)}>Düş</button>
-                <button className="secondary" onClick={() => handleBulkAdjust(p.id, 1)}>Ekle</button>
+              <td>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="adet"
+                    style={{ width: 60 }}
+                    value={adjustAmounts[p.id] || ""}
+                    onChange={(e) => setAdjustAmounts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                  />
+                  <button className="secondary" onClick={() => handleBulkAdjust(p.id, -1)}>Düş</button>
+                  <button className="secondary" onClick={() => handleBulkAdjust(p.id, 1)}>Ekle</button>
+                </div>
               </td>
-              <td style={{ display: "flex", gap: 6 }}>
-                <button className="secondary" onClick={() => handleAdjust(p.id, 1)}>+1</button>
-                <button className="secondary" onClick={() => handleAdjust(p.id, -1)}>-1</button>
-                <button className="secondary" onClick={() => handleDelete(p.id)}>Sil</button>
+              <td>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="secondary" onClick={() => handleAdjust(p.id, 1)}>+1</button>
+                  <button className="secondary" onClick={() => handleAdjust(p.id, -1)}>-1</button>
+                  <button className="secondary" onClick={() => handleDelete(p.id)}>Sil</button>
+                </div>
               </td>
             </tr>
           ))}
@@ -254,6 +259,7 @@ export default function Products() {
           )}
         </tbody>
       </table>
+      </div>
 
       <h1 style={{ marginTop: 32 }}>Fiyat Etiketi Basımı</h1>
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16 }}>

@@ -14,6 +14,7 @@ function SalesHistoryContent() {
   return (
     <div>
       <h1>Satış Geçmişi</h1>
+      <div className="table-scroll">
       <table>
         <thead>
           <tr>
@@ -41,10 +42,12 @@ function SalesHistoryContent() {
           )}
         </tbody>
       </table>
+      </div>
 
       {returns.length > 0 && (
         <>
           <h1 style={{ marginTop: 32 }}>İadeler</h1>
+          <div className="table-scroll">
           <table>
             <thead>
               <tr>
@@ -67,6 +70,7 @@ function SalesHistoryContent() {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>
